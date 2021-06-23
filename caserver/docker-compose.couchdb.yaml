@@ -1,0 +1,76 @@
+# Docker compose for multi-org-ca-1
+#DEV_MODE_DEV
+version: '2'
+
+networks:
+  textile:
+
+services:
+  
+
+  # Org1 peer1
+  org1-peer1.couchdb:
+    container_name: org1-peer1.couchdb
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=
+      - COUCHDB_PASSWORD=
+    ports:
+      - "5984:5984"
+    networks:
+      - textile
+
+  org1-peer1.org1.com:
+    container_name: org1-peer1.org1.com
+    environment:
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=org1-peer1.couchdb:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    depends_on:
+      - org1-peer1.couchdb
+
+  # Org2 peer1
+  org2-peer1.couchdb:
+    container_name: org2-peer1.couchdb
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=
+      - COUCHDB_PASSWORD=
+    ports:
+      - "6984:5984"
+    networks:
+      - textile
+
+  org2-peer1.org2.com:
+    container_name: org2-peer1.org2.com
+    environment:
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=org2-peer1.couchdb:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    depends_on:
+      - org2-peer1.couchdb
+
+  # Org3 peer1
+  org3-peer1.couchdb:
+    container_name: org3-peer1.couchdb
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=
+      - COUCHDB_PASSWORD=
+    ports:
+      - "7984:5984"
+    networks:
+      - textile
+
+  org3-peer1.org3.com:
+    container_name: org3-peer1.org3.com
+    environment:
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=org3-peer1.couchdb:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    depends_on:
+      - org3-peer1.couchdb      
+    

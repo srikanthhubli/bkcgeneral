@@ -1,0 +1,188 @@
+version: '2'
+
+networks:
+  textile:
+
+services:
+  # Orderer
+  orderer.org1.com:
+    container_name: orderer.org1.com
+    image: hyperledger/fabric-orderer:$IMAGE_TAG
+    environment:
+      - FABRIC_CFG_PATH=/var/hyperledger/config
+      # - ORDERER_GENERAL_LOGLEVEL=DEBUG
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=orderer.org1.com
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      # - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/genesis/textile-genesis.block
+      - ORDERER_GENERAL_BOOTSTRAPFILE=/var/hyperledger/genesis/textile-genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/msp
+      - ORDERER_FILELEDGER_LOCATION=/var/ledger
+    working_dir: $HOME
+    command: orderer
+    volumes:
+    # Folder with genesis block
+    - ${PWD}/config/orderer:/var/hyperledger/genesis
+    # Map the folder with MSP for orderer
+    - ${PWD}/client/orderer/orderer//msp:/var/hyperledger/msp
+    # Map the current folder to cfg
+    - ${PWD}/config/orderer:/var/hyperledger/config
+    - ${HOME}/ledgers/ca/orderer.org1.com:/var/ledger
+    ports:
+      - 7050:7050
+    networks:
+      - textile
+
+  # Org1 peer1
+  org1-peer1.org1.com:
+    container_name: org1-peer1.org1.com
+    image: hyperledger/fabric-peer:$IMAGE_TAG
+    environment:
+      - FABRIC_CFG_PATH=/var/hyperledger/config
+      # - CORE_LOGGING_LEVEL=debug
+      - FABRIC_LOGGING_SPEC=INFO
+
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_textile
+
+      - CORE_PEER_ID=org1-peer1.org1.com
+      # - CORE_PEER_LISTENADDRESS=org2-peer1.org2.com:7051
+      - CORE_PEER_ADDRESS=org1-peer1.org1.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=org1-peer1.org1.com:7051
+      # - CORE_PEER_ADDRESS=0.0.0.0:7051
+      # - CORE_PEER_GOSSIP_EXTERNALENDPOINT=0.0.0.0:7051
+
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_MSPCONFIGPATH=/var/hyperledger/msp
+      - CORE_PEER_TLS_ENABLED=false
+      # - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      # - CORE_PEER_GOSSIP_ORGLEADER=false
+      # - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_FILESYSTEMPATH=/var/ledger
+    working_dir: $HOME
+    # command: peer node start --peer-chaincodedev=true
+    command: peer node start
+
+    volumes:
+      # Folder with channel create tx file
+      - ${PWD}/config:/var/hyperledger/channeltx
+      # Map the folder with MSP for Peer
+      - ${PWD}/client/org1/peer1/msp:/var/hyperledger/msp
+      # Map the current folder to cfg
+      - ${PWD}/config:/var/hyperledger/config
+      - /var/run/:/host/var/run/
+      # Ledger folder for the peer
+      - ${HOME}/ledgers/ca/org1-peer1.org1.com/:/var/ledger
+    depends_on: 
+      - orderer.org1.com
+    ports:
+      - 7051:7051
+      - 7052:7052
+      - 7053:7053
+    networks:
+      - textile
+
+  # Org2 peer1
+  org2-peer1.org2.com:
+    container_name: org2-peer1.org2.com
+    image: hyperledger/fabric-peer:$IMAGE_TAG
+    environment:
+      - FABRIC_CFG_PATH=/var/hyperledger/config
+      # - CORE_LOGGING_LEVEL=debug
+      - FABRIC_LOGGING_SPEC=INFO
+
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_textile
+
+      - CORE_PEER_ID=org2-peer1.org2.com
+      - CORE_PEER_ADDRESS=org2-peer1.org2.com:8051
+      # - CORE_PEER_LISTENADDRESS=org2-peer1.org2.com:8051
+      - CORE_PEER_LISTENADDRESS=org2-peer1.org2.com:8051
+      - CORE_PEER_CHAINCODELISTENADDRESS=org2-peer1.org2.com:8052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=org2-peer1.org2.com:8051
+      - CORE_PEER_LOCALMSPID=Org2MSP
+      - CORE_PEER_MSPCONFIGPATH=/var/hyperledger/msp
+      - CORE_PEER_TLS_ENABLED=false
+      # - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      # - CORE_PEER_GOSSIP_ORGLEADER=false
+      # - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_FILESYSTEMPATH=/var/ledger
+    working_dir: $HOME
+    # command: peer node start --peer-chaincodedev=true
+    command: peer node start
+
+    volumes:
+      # Folder with channel create tx file
+      - ${PWD}/config:/var/hyperledger/channeltx
+      # Map the folder with MSP for Peer
+      - ${PWD}/client/org2/peer1/msp:/var/hyperledger/msp
+      # Map the current folder to cfg
+      - ${PWD}/config:/var/hyperledger/config
+      - /var/run/:/host/var/run/
+      # Ledger folder for the peer
+      - ${HOME}/ledgers/ca/org2-peer1.org2.com:/var/ledger
+    depends_on: 
+      - orderer.org1.com
+    ports:
+      - 8051:8051
+      - 8052:8052
+      - 8053:8053
+    networks:
+      - textile
+
+  # Org3 peer1
+  org3-peer1.org3.com:
+    container_name: org3-peer1.org3.com
+    image: hyperledger/fabric-peer:$IMAGE_TAG
+    dns_search: .
+    environment:
+      - FABRIC_CFG_PATH=/var/hyperledger/config
+      # - CORE_LOGGING_LEVEL=debug
+      - FABRIC_LOGGING_SPEC=INFO
+
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_textile
+
+      - CORE_PEER_ID=org3-peer1.org3.com
+      - CORE_PEER_ADDRESS=org3-peer1.org3.com:9051
+      # - CORE_PEER_LISTENADDRESS=org3-peer1.org3.com:9051
+      - CORE_PEER_LISTENADDRESS=org3-peer1.org3.com:9051
+      - CORE_PEER_CHAINCODELISTENADDRESS=org3-peer1.org3.com:9052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=org3-peer1.org3.com:9051
+      - CORE_PEER_LOCALMSPID=Org3MSP
+      - CORE_PEER_MSPCONFIGPATH=/var/hyperledger/msp
+      - CORE_PEER_TLS_ENABLED=false
+      # - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      # - CORE_PEER_GOSSIP_ORGLEADER=false
+      # - CORE_PEER_PROFILE_ENABLED=true
+      - CORE_PEER_FILESYSTEMPATH=/var/ledger
+    working_dir: $HOME
+    # command: peer node start --peer-chaincodedev=true
+    command: peer node start
+
+    volumes:
+      # Folder with channel create tx file
+      - ${PWD}/config:/var/hyperledger/channeltx
+      # Map the folder with MSP for Peer
+      - ${PWD}/client/org3/peer1/msp:/var/hyperledger/msp
+      # Map the current folder to cfg
+      - ${PWD}/config:/var/hyperledger/config
+      - /var/run/:/host/var/run/
+      # Ledger folder for the peer
+      - ${HOME}/ledgers/ca/org3-peer1.org3.com:/var/ledger
+    depends_on: 
+      - orderer.org1.com
+    ports:
+      - 9051:9051
+      - 9052:9052
+      - 9053:9053
+    networks:
+      - textile
+
+   
+
+  
